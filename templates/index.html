@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tu Mejor CV - Generador ATS Harvard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="site-title">Tu Mejor CV</h1>
+      <p class="site-subtitle">Generador de CVs Profesionales en Formato ATS Harvard</p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alerts">
+          {% for category, message in messages %}
+            <div class="alert alert--{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="intro-card">
+      <p>
+        Completa el formulario con tu informacion profesional o sube tu CV actual (PDF o imagen)
+        y nuestra IA lo transformara en un CV optimizado para sistemas ATS en formato Harvard,
+        listo para descargar en Word.
+      </p>
+    </div>
+
+    <form id="cvForm" action="/generar" method="POST" enctype="multipart/form-data" novalidate>
+
+      <!-- ── DATOS DE CONTACTO ────────────────────────────── -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="section-num">1</span> Informacion de Contacto
+        </h2>
+
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label for="nombre">Nombres y Apellidos completos *</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Ej: Maria Elena Torres Ruiz"
+                   autocomplete="name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="telefono">Telefono</label>
+            <input type="tel" id="telefono" name="telefono" placeholder="Ej: +51 987 654 321"
+                   autocomplete="tel" />
+          </div>
+
+          <div class="form-group">
+            <label for="correo">Correo Electronico</label>
+            <input type="email" id="correo" name="correo" placeholder="correo@ejemplo.com"
+                   autocomplete="email" />
+          </div>
+
+          <div class="form-group form-group--full">
+            <label for="direccion">Direccion</label>
+            <input type="text" id="direccion" name="direccion"
+                   placeholder="Ej: Av. Arequipa 1234, Miraflores, Lima" />
+          </div>
+
+          <div class="form-group">
+            <label for="dni">DNI / Documento de Identidad</label>
+            <input type="text" id="dni" name="dni" placeholder="Ej: 12345678" />
+          </div>
+
+          <div class="form-group">
+            <label for="licencia">Licencia de Conducir</label>
+            <input type="text" id="licencia" name="licencia" placeholder="Ej: A-IIb" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ── EXPERIENCIA LABORAL ─────────────────────────── -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="section-num">2</span> Experiencia Laboral
+        </h2>
+        <p class="section-hint">
+          Describe cada trabajo con empresa, cargo, fechas y funciones. Puedes escribir con tus
+          propias palabras; la IA lo optimizara automaticamente.
+        </p>
+        <div class="form-group">
+          <label for="experiencia_texto">Experiencia laboral</label>
+          <textarea id="experiencia_texto" name="experiencia_texto" rows="10"
+                    placeholder="Ejemplo:
+Empresa: ABC S.A.C.
+Cargo: Asistente Administrativo
+Periodo: enero 2022 - marzo 2024
+Ubicacion: Lima, Peru
+Funciones: Gestion de documentos, coordinacion de reuniones, atencion al cliente, elaboracion de reportes mensuales.
+Logro: Reduje el tiempo de procesamiento de documentos en un 30%.
+
+Empresa: XYZ Corp
+Cargo: Vendedor
+Periodo: mayo 2020 - diciembre 2021
+..."></textarea>
+        </div>
+      </section>
+
+      <!-- ── FORMACION ACADEMICA ─────────────────────────── -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="section-num">3</span> Formacion Academica
+        </h2>
+        <div class="form-group">
+          <label for="formacion_texto">Estudios, cursos y certificaciones</label>
+          <textarea id="formacion_texto" name="formacion_texto" rows="7"
+                    placeholder="Ejemplo:
+Universidad Nacional Mayor de San Marcos - Administracion de Empresas (2018-2022)
+Instituto Certus - Computacion e Informatica (2016-2018)
+Curso: Marketing Digital - Cibertec (2023)
+Diplomado en Gestion de Proyectos - PUCP (2023)"></textarea>
+        </div>
+      </section>
+
+      <!-- ── HABILIDADES ─────────────────────────────────── -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="section-num">4</span> Habilidades y Competencias
+        </h2>
+        <div class="form-group">
+          <label for="habilidades_texto">Habilidades tecnicas, software, idiomas y competencias blandas</label>
+          <textarea id="habilidades_texto" name="habilidades_texto" rows="5"
+                    placeholder="Ejemplo:
+Software: Microsoft Office (avanzado), SAP (intermedio), Salesforce (basico)
+Idiomas: Español (nativo), Ingles (intermedio B2), Portugues (basico)
+Habilidades: Analisis de datos, gestion de proyectos, atencion al detalle
+Competencias: Liderazgo, trabajo en equipo, comunicacion efectiva, adaptabilidad"></textarea>
+        </div>
+      </section>
+
+      <!-- ── INFORMACION ADICIONAL ───────────────────────── -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="section-num">5</span> Informacion Adicional
+        </h2>
+        <div class="form-group">
+          <label for="info_adicional">Cualquier informacion extra que quieras incluir</label>
+          <textarea id="info_adicional" name="info_adicional" rows="4"
+                    placeholder="Voluntariados, publicaciones, proyectos destacados, referencias, etc."></textarea>
+        </div>
+      </section>
+
+      <!-- ── ARCHIVO ──────────────────────────────────────── -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="section-num">6</span> Sube tu CV actual (Opcional)
+        </h2>
+        <p class="section-hint">
+          Si ya tienes un CV en PDF o una foto de tu CV, subelo y la IA extraera la informacion
+          automaticamente. Esto complementa (no reemplaza) lo que escribiste arriba.
+        </p>
+        <div class="form-group">
+          <label for="archivo" class="file-label">
+            <div class="file-drop-zone" id="dropZone">
+              <div class="file-icon">&#128196;</div>
+              <p class="file-text">Arrastra tu archivo aqui o <strong>haz clic para seleccionar</strong></p>
+              <p class="file-hint">PDF, PNG, JPG, JPEG, GIF o WEBP - Max. 10 MB</p>
+              <p class="file-selected" id="fileName"></p>
+            </div>
+          </label>
+          <input type="file" id="archivo" name="archivo" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
+                 style="display:none;" />
+        </div>
+      </section>
+
+      <!-- ── SUBMIT ───────────────────────────────────────── -->
+      <div class="submit-area">
+        <button type="submit" class="btn-generate" id="submitBtn">
+          <span class="btn-text">Generar mi CV en Word</span>
+          <span class="btn-loading" style="display:none;">Generando CV... espera un momento</span>
+        </button>
+        <p class="submit-note">
+          El proceso puede tardar entre 15 y 45 segundos mientras la IA optimiza tu informacion.
+        </p>
+      </div>
+
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Tu Mejor CV &mdash; Powered by Claude AI (Anthropic)</p>
+    </div>
+  </footer>
+
+  <script>
+    // File input display
+    const fileInput = document.getElementById('archivo');
+    const fileName  = document.getElementById('fileName');
+    const dropZone  = document.getElementById('dropZone');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        fileName.textContent = 'Archivo seleccionado: ' + fileInput.files[0].name;
+        dropZone.classList.add('file-drop-zone--selected');
+      }
+    });
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('file-drop-zone--hover');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('file-drop-zone--hover');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('file-drop-zone--hover');
+      if (e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        fileName.textContent = 'Archivo seleccionado: ' + e.dataTransfer.files[0].name;
+        dropZone.classList.add('file-drop-zone--selected');
+      }
+    });
+
+    // Form submit loading state
+    const form      = document.getElementById('cvForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText   = document.querySelector('.btn-text');
+    const btnLoading = document.querySelector('.btn-loading');
+
+    form.addEventListener('submit', (e) => {
+      // Basic validation
+      const nombre = document.getElementById('nombre').value.trim();
+      if (!nombre) {
+        e.preventDefault();
+        alert('Por favor ingresa tu nombre completo.');
+        return;
+      }
+      submitBtn.disabled = true;
+      btnText.style.display   = 'none';
+      btnLoading.style.display = 'inline';
+    });
+  </script>
+</body>
+</html>

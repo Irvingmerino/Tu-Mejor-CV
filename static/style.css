@@ -1,0 +1,284 @@
+/* ══════════════════════════════════════════════════
+   Tu Mejor CV — ATS Harvard Generator
+   Clean, professional stylesheet
+   ══════════════════════════════════════════════════ */
+
+:root {
+  --color-primary:    #1a3a5c;
+  --color-primary-lt: #2b5ba0;
+  --color-accent:     #c8a84b;
+  --color-success:    #27ae60;
+  --color-error:      #c0392b;
+  --color-bg:         #f5f6fa;
+  --color-surface:    #ffffff;
+  --color-border:     #d1d9e0;
+  --color-text:       #1d2d44;
+  --color-muted:      #6c7a89;
+  --radius:           8px;
+  --shadow:           0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg:        0 4px 24px rgba(0,0,0,.12);
+  --transition:       .2s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ── HEADER ─────────────────────────────────────────── */
+.site-header {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-lt) 100%);
+  color: #fff;
+  padding: 2.5rem 0 2rem;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.site-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  margin-bottom: .4rem;
+}
+
+.site-subtitle {
+  font-size: 1rem;
+  opacity: .85;
+  font-weight: 400;
+}
+
+/* ── ALERTS ─────────────────────────────────────────── */
+.alerts { margin: 1.5rem 0 0; }
+
+.alert {
+  padding: .85rem 1.2rem;
+  border-radius: var(--radius);
+  font-size: .95rem;
+  margin-bottom: .75rem;
+  border-left: 4px solid transparent;
+}
+
+.alert--error {
+  background: #fdf0ef;
+  border-color: var(--color-error);
+  color: #7b1a12;
+}
+
+.alert--success {
+  background: #eafaf1;
+  border-color: var(--color-success);
+  color: #1a6b3a;
+}
+
+/* ── INTRO CARD ─────────────────────────────────────── */
+.intro-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.5rem;
+  margin: 1.5rem 0;
+  font-size: .95rem;
+  color: var(--color-muted);
+  box-shadow: var(--shadow);
+}
+
+/* ── FORM SECTIONS ──────────────────────────────────── */
+.form-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.8rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin-bottom: 1rem;
+}
+
+.section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 50%;
+  font-size: .8rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.section-hint {
+  font-size: .88rem;
+  color: var(--color-muted);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+/* ── FORM GRID ──────────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group { display: flex; flex-direction: column; gap: .4rem; }
+.form-group--full { grid-column: 1 / -1; }
+
+label {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+textarea {
+  padding: .65rem .9rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: .95rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: #fafbfd;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-primary-lt);
+  box-shadow: 0 0 0 3px rgba(43,91,160,.15);
+  background: #fff;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #aab3bf;
+  font-size: .88rem;
+}
+
+/* ── FILE UPLOAD ────────────────────────────────────── */
+.file-label { cursor: pointer; display: block; }
+
+.file-drop-zone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: border-color var(--transition), background var(--transition);
+  background: #fafbfd;
+  cursor: pointer;
+}
+
+.file-drop-zone:hover,
+.file-drop-zone--hover {
+  border-color: var(--color-primary-lt);
+  background: #f0f4fb;
+}
+
+.file-drop-zone--selected {
+  border-color: var(--color-success);
+  background: #f0faf4;
+}
+
+.file-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+
+.file-text {
+  font-size: .95rem;
+  color: var(--color-text);
+  margin-bottom: .3rem;
+}
+
+.file-hint {
+  font-size: .8rem;
+  color: var(--color-muted);
+}
+
+.file-selected {
+  margin-top: .75rem;
+  font-size: .85rem;
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+/* ── SUBMIT ─────────────────────────────────────────── */
+.submit-area {
+  text-align: center;
+  padding: 1.5rem 0 2.5rem;
+}
+
+.btn-generate {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-lt) 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 1rem 2.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
+  box-shadow: 0 4px 16px rgba(26,58,92,.35);
+  min-width: 220px;
+}
+
+.btn-generate:hover:not(:disabled) {
+  opacity: .92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(26,58,92,.4);
+}
+
+.btn-generate:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.submit-note {
+  margin-top: .85rem;
+  font-size: .83rem;
+  color: var(--color-muted);
+}
+
+/* ── FOOTER ─────────────────────────────────────────── */
+.site-footer {
+  background: var(--color-primary);
+  color: rgba(255,255,255,.7);
+  text-align: center;
+  padding: 1.2rem 0;
+  font-size: .85rem;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 600px) {
+  .site-title { font-size: 1.75rem; }
+  .form-grid  { grid-template-columns: 1fr; }
+  .form-section { padding: 1.2rem; }
+  .btn-generate { width: 100%; }
+}
