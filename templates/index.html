@@ -28,37 +28,79 @@
 
     <div class="intro-card">
       <p>
-        Completa el formulario con tu informacion profesional o sube tu CV actual (PDF o imagen)
-        y nuestra IA lo transformara en un CV optimizado para sistemas ATS en formato Harvard,
-        listo para descargar en Word.
+        <strong>Modo automatico:</strong> sube tu CV actual (PDF o imagen) y la IA extraera
+        todos tus datos automaticamente: contacto, experiencia, formacion y habilidades.
+        Luego podras revisar, corregir o agregar informacion antes de generar tu nuevo CV en Word.
       </p>
     </div>
 
     <form id="cvForm" action="/generar" method="POST" enctype="multipart/form-data" novalidate>
 
-      <!-- ── DATOS DE CONTACTO ────────────────────────────── -->
-      <section class="form-section">
+      <!-- ── ARCHIVO (PRIMERO) ────────────────────────────── -->
+      <section class="form-section form-section--file">
         <h2 class="section-title">
-          <span class="section-num">1</span> Informacion de Contacto
+          <span class="section-num">1</span>
+          Sube tu CV actual
+          <span class="badge-auto">Extraccion automatica</span>
         </h2>
+        <p class="section-hint">
+          Sube tu CV en PDF o una foto/imagen de tu CV. La IA extraera automaticamente todos tus
+          datos y rellenara los campos del formulario. Tambien puedes generar el CV
+          <strong>solo con el archivo</strong>, sin necesidad de completar nada manualmente.
+        </p>
+
+        <div class="form-group">
+          <label for="archivo" class="file-label">
+            <div class="file-drop-zone" id="dropZone">
+              <div class="file-icon" id="fileIcon">&#128196;</div>
+              <p class="file-text" id="fileMainText">
+                Arrastra tu CV aqui o <strong>haz clic para seleccionar</strong>
+              </p>
+              <p class="file-hint">PDF, PNG, JPG, JPEG, GIF o WEBP &mdash; Max. 10 MB</p>
+              <p class="file-selected" id="fileName"></p>
+            </div>
+          </label>
+          <input type="file" id="archivo" name="archivo"
+                 accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" style="display:none;" />
+        </div>
+
+        <!-- Extraction status banner -->
+        <div class="extraction-status" id="extractionStatus" style="display:none;">
+          <div class="extraction-status__inner">
+            <span class="spinner" id="extractionSpinner"></span>
+            <span id="extractionMsg">Extrayendo datos de contacto del documento...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── DATOS DE CONTACTO ────────────────────────────── -->
+      <section class="form-section" id="sectionContacto">
+        <h2 class="section-title">
+          <span class="section-num">2</span> Informacion de Contacto
+          <span class="autofill-badge" id="autofillBadge" style="display:none;">Autorellenado</span>
+        </h2>
+        <p class="section-hint">
+          Si subiste un archivo, tus datos apareceran aqui automaticamente. Puedes editarlos
+          o completar los que falten.
+        </p>
 
         <div class="form-grid">
           <div class="form-group form-group--full">
-            <label for="nombre">Nombres y Apellidos completos *</label>
-            <input type="text" id="nombre" name="nombre" placeholder="Ej: Maria Elena Torres Ruiz"
-                   autocomplete="name" required />
+            <label for="nombre">Nombres y Apellidos completos</label>
+            <input type="text" id="nombre" name="nombre"
+                   placeholder="Ej: Maria Elena Torres Ruiz" autocomplete="name" />
           </div>
 
           <div class="form-group">
             <label for="telefono">Telefono</label>
-            <input type="tel" id="telefono" name="telefono" placeholder="Ej: +51 987 654 321"
-                   autocomplete="tel" />
+            <input type="tel" id="telefono" name="telefono"
+                   placeholder="Ej: +51 987 654 321" autocomplete="tel" />
           </div>
 
           <div class="form-group">
             <label for="correo">Correo Electronico</label>
-            <input type="email" id="correo" name="correo" placeholder="correo@ejemplo.com"
-                   autocomplete="email" />
+            <input type="email" id="correo" name="correo"
+                   placeholder="correo@ejemplo.com" autocomplete="email" />
           </div>
 
           <div class="form-group form-group--full">
@@ -82,21 +124,22 @@
       <!-- ── EXPERIENCIA LABORAL ─────────────────────────── -->
       <section class="form-section">
         <h2 class="section-title">
-          <span class="section-num">2</span> Experiencia Laboral
+          <span class="section-num">3</span> Experiencia Laboral
         </h2>
         <p class="section-hint">
-          Describe cada trabajo con empresa, cargo, fechas y funciones. Puedes escribir con tus
-          propias palabras; la IA lo optimizara automaticamente.
+          Si subiste un archivo, la IA extraera la experiencia desde el documento.
+          Puedes agregar o corregir informacion aqui. Si no subes archivo, describe cada trabajo
+          con empresa, cargo, fechas y funciones.
         </p>
         <div class="form-group">
-          <label for="experiencia_texto">Experiencia laboral</label>
+          <label for="experiencia_texto">Experiencia laboral (opcional si hay archivo)</label>
           <textarea id="experiencia_texto" name="experiencia_texto" rows="10"
                     placeholder="Ejemplo:
 Empresa: ABC S.A.C.
 Cargo: Asistente Administrativo
 Periodo: enero 2022 - marzo 2024
 Ubicacion: Lima, Peru
-Funciones: Gestion de documentos, coordinacion de reuniones, atencion al cliente, elaboracion de reportes mensuales.
+Funciones: Gestion de documentos, coordinacion de reuniones, atencion al cliente.
 Logro: Reduje el tiempo de procesamiento de documentos en un 30%.
 
 Empresa: XYZ Corp
@@ -109,10 +152,10 @@ Periodo: mayo 2020 - diciembre 2021
       <!-- ── FORMACION ACADEMICA ─────────────────────────── -->
       <section class="form-section">
         <h2 class="section-title">
-          <span class="section-num">3</span> Formacion Academica
+          <span class="section-num">4</span> Formacion Academica
         </h2>
         <div class="form-group">
-          <label for="formacion_texto">Estudios, cursos y certificaciones</label>
+          <label for="formacion_texto">Estudios, cursos y certificaciones (opcional si hay archivo)</label>
           <textarea id="formacion_texto" name="formacion_texto" rows="7"
                     placeholder="Ejemplo:
 Universidad Nacional Mayor de San Marcos - Administracion de Empresas (2018-2022)
@@ -125,10 +168,10 @@ Diplomado en Gestion de Proyectos - PUCP (2023)"></textarea>
       <!-- ── HABILIDADES ─────────────────────────────────── -->
       <section class="form-section">
         <h2 class="section-title">
-          <span class="section-num">4</span> Habilidades y Competencias
+          <span class="section-num">5</span> Habilidades y Competencias
         </h2>
         <div class="form-group">
-          <label for="habilidades_texto">Habilidades tecnicas, software, idiomas y competencias blandas</label>
+          <label for="habilidades_texto">Habilidades, software e idiomas (opcional si hay archivo)</label>
           <textarea id="habilidades_texto" name="habilidades_texto" rows="5"
                     placeholder="Ejemplo:
 Software: Microsoft Office (avanzado), SAP (intermedio), Salesforce (basico)
@@ -141,35 +184,12 @@ Competencias: Liderazgo, trabajo en equipo, comunicacion efectiva, adaptabilidad
       <!-- ── INFORMACION ADICIONAL ───────────────────────── -->
       <section class="form-section">
         <h2 class="section-title">
-          <span class="section-num">5</span> Informacion Adicional
+          <span class="section-num">6</span> Informacion Adicional
         </h2>
         <div class="form-group">
-          <label for="info_adicional">Cualquier informacion extra que quieras incluir</label>
+          <label for="info_adicional">Informacion extra que quieras incluir</label>
           <textarea id="info_adicional" name="info_adicional" rows="4"
                     placeholder="Voluntariados, publicaciones, proyectos destacados, referencias, etc."></textarea>
-        </div>
-      </section>
-
-      <!-- ── ARCHIVO ──────────────────────────────────────── -->
-      <section class="form-section">
-        <h2 class="section-title">
-          <span class="section-num">6</span> Sube tu CV actual (Opcional)
-        </h2>
-        <p class="section-hint">
-          Si ya tienes un CV en PDF o una foto de tu CV, subelo y la IA extraera la informacion
-          automaticamente. Esto complementa (no reemplaza) lo que escribiste arriba.
-        </p>
-        <div class="form-group">
-          <label for="archivo" class="file-label">
-            <div class="file-drop-zone" id="dropZone">
-              <div class="file-icon">&#128196;</div>
-              <p class="file-text">Arrastra tu archivo aqui o <strong>haz clic para seleccionar</strong></p>
-              <p class="file-hint">PDF, PNG, JPG, JPEG, GIF o WEBP - Max. 10 MB</p>
-              <p class="file-selected" id="fileName"></p>
-            </div>
-          </label>
-          <input type="file" id="archivo" name="archivo" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
-                 style="display:none;" />
         </div>
       </section>
 
@@ -177,9 +197,11 @@ Competencias: Liderazgo, trabajo en equipo, comunicacion efectiva, adaptabilidad
       <div class="submit-area">
         <button type="submit" class="btn-generate" id="submitBtn">
           <span class="btn-text">Generar mi CV en Word</span>
-          <span class="btn-loading" style="display:none;">Generando CV... espera un momento</span>
+          <span class="btn-loading" style="display:none;">
+            <span class="spinner spinner--btn"></span> Generando CV... espera un momento
+          </span>
         </button>
-        <p class="submit-note">
+        <p class="submit-note" id="submitNote">
           El proceso puede tardar entre 15 y 45 segundos mientras la IA optimiza tu informacion.
         </p>
       </div>
@@ -194,55 +216,139 @@ Competencias: Liderazgo, trabajo en equipo, comunicacion efectiva, adaptabilidad
   </footer>
 
   <script>
-    // File input display
-    const fileInput = document.getElementById('archivo');
-    const fileName  = document.getElementById('fileName');
-    const dropZone  = document.getElementById('dropZone');
+    // ── Element references ────────────────────────────────
+    const fileInput       = document.getElementById('archivo');
+    const fileName        = document.getElementById('fileName');
+    const fileIcon        = document.getElementById('fileIcon');
+    const fileMainText    = document.getElementById('fileMainText');
+    const dropZone        = document.getElementById('dropZone');
+    const extractStatus   = document.getElementById('extractionStatus');
+    const extractMsg      = document.getElementById('extractionMsg');
+    const extractSpinner  = document.getElementById('extractionSpinner');
+    const autofillBadge   = document.getElementById('autofillBadge');
+    const submitBtn       = document.getElementById('submitBtn');
+    const btnText         = document.querySelector('.btn-text');
+    const btnLoading      = document.querySelector('.btn-loading');
+    const submitNote      = document.getElementById('submitNote');
+    const form            = document.getElementById('cvForm');
 
+    // Contact field IDs
+    const CONTACT_FIELDS = ['nombre', 'telefono', 'correo', 'direccion', 'dni', 'licencia'];
+
+    let fileHasBeenUploaded = false;
+
+    // ── File drop zone interactions ───────────────────────
     dropZone.addEventListener('click', () => fileInput.click());
 
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length > 0) {
-        fileName.textContent = 'Archivo seleccionado: ' + fileInput.files[0].name;
-        dropZone.classList.add('file-drop-zone--selected');
-      }
-    });
-
-    // Drag and drop
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.classList.add('file-drop-zone--hover');
     });
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('file-drop-zone--hover');
-    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('file-drop-zone--hover'));
     dropZone.addEventListener('drop', (e) => {
       e.preventDefault();
       dropZone.classList.remove('file-drop-zone--hover');
       if (e.dataTransfer.files.length > 0) {
-        fileInput.files = e.dataTransfer.files;
-        fileName.textContent = 'Archivo seleccionado: ' + e.dataTransfer.files[0].name;
-        dropZone.classList.add('file-drop-zone--selected');
+        // Assign dropped file to the input
+        const dt = new DataTransfer();
+        dt.items.add(e.dataTransfer.files[0]);
+        fileInput.files = dt.files;
+        handleFileSelected(e.dataTransfer.files[0]);
       }
     });
 
-    // Form submit loading state
-    const form      = document.getElementById('cvForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const btnText   = document.querySelector('.btn-text');
-    const btnLoading = document.querySelector('.btn-loading');
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) handleFileSelected(fileInput.files[0]);
+    });
 
+    // ── Handle file selection ─────────────────────────────
+    function handleFileSelected(file) {
+      // Update drop zone UI
+      fileName.textContent = 'Archivo seleccionado: ' + file.name;
+      dropZone.classList.add('file-drop-zone--selected');
+      fileIcon.textContent = file.name.toLowerCase().endsWith('.pdf') ? '📄' : '🖼️';
+      fileHasBeenUploaded = true;
+
+      // Update submit note
+      submitNote.textContent = 'Con archivo adjunto, el CV se generara completamente desde el documento.';
+
+      // Trigger async contact extraction
+      extractContactData(file);
+    }
+
+    // ── Auto-extract contact data via AJAX ────────────────
+    async function extractContactData(file) {
+      showExtractionStatus('Extrayendo datos de contacto del documento...');
+
+      const formData = new FormData();
+      formData.append('archivo', file);
+
+      try {
+        const response = await fetch('/extraer-contacto', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await response.json();
+
+        if (data.success && data.contacto) {
+          autofillContactFields(data.contacto);
+          showExtractionStatus('Datos de contacto extraidos correctamente. Revisa y corrige si es necesario.', 'success');
+        } else {
+          showExtractionStatus('No se pudieron extraer datos de contacto automaticamente. Completalos manualmente.', 'warning');
+        }
+      } catch (err) {
+        showExtractionStatus('Error al extraer datos. Completa los campos manualmente.', 'warning');
+      }
+    }
+
+    // ── Fill contact fields from extracted data ───────────
+    function autofillContactFields(contacto) {
+      let filledCount = 0;
+      CONTACT_FIELDS.forEach(fieldId => {
+        const el = document.getElementById(fieldId);
+        const value = (contacto[fieldId] || '').trim();
+        if (el && value) {
+          el.value = value;
+          el.classList.add('input--autofilled');
+          filledCount++;
+          // Remove highlight after a few seconds
+          setTimeout(() => el.classList.remove('input--autofilled'), 4000);
+        }
+      });
+      if (filledCount > 0) {
+        autofillBadge.style.display = 'inline-flex';
+        // Smooth scroll to contact section
+        document.getElementById('sectionContacto').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // ── Extraction status banner ──────────────────────────
+    function showExtractionStatus(message, type = 'loading') {
+      extractStatus.style.display = 'block';
+      extractMsg.textContent = message;
+      extractStatus.className = 'extraction-status extraction-status--' + type;
+      extractSpinner.style.display = type === 'loading' ? 'inline-block' : 'none';
+
+      if (type !== 'loading') {
+        setTimeout(() => { extractStatus.style.display = 'none'; }, 5000);
+      }
+    }
+
+    // ── Form submit ───────────────────────────────────────
     form.addEventListener('submit', (e) => {
-      // Basic validation
       const nombre = document.getElementById('nombre').value.trim();
-      if (!nombre) {
+      const hasFile = fileInput.files.length > 0;
+
+      // Require either a name or a file
+      if (!nombre && !hasFile) {
         e.preventDefault();
-        alert('Por favor ingresa tu nombre completo.');
+        alert('Por favor, sube tu CV como archivo o ingresa al menos tu nombre completo.');
         return;
       }
+
       submitBtn.disabled = true;
-      btnText.style.display   = 'none';
-      btnLoading.style.display = 'inline';
+      btnText.style.display  = 'none';
+      btnLoading.style.display = 'inline-flex';
     });
   </script>
 </body>

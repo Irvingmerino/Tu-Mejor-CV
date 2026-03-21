@@ -8,6 +8,7 @@
   --color-primary-lt: #2b5ba0;
   --color-accent:     #c8a84b;
   --color-success:    #27ae60;
+  --color-warning:    #e67e22;
   --color-error:      #c0392b;
   --color-bg:         #f5f6fa;
   --color-surface:    #ffffff;
@@ -86,13 +87,13 @@ body {
 
 /* ── INTRO CARD ─────────────────────────────────────── */
 .intro-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: linear-gradient(135deg, #eef4ff 0%, #f0faf4 100%);
+  border: 1px solid #c3d9ff;
   border-radius: var(--radius);
   padding: 1.2rem 1.5rem;
   margin: 1.5rem 0;
   font-size: .95rem;
-  color: var(--color-muted);
+  color: var(--color-text);
   box-shadow: var(--shadow);
 }
 
@@ -106,6 +107,12 @@ body {
   box-shadow: var(--shadow);
 }
 
+/* File section gets a highlighted border */
+.form-section--file {
+  border-color: #a0c4ff;
+  background: linear-gradient(135deg, #f8fbff 0%, #fafffe 100%);
+}
+
 .section-title {
   font-size: 1.1rem;
   font-weight: 700;
@@ -114,6 +121,7 @@ body {
   align-items: center;
   gap: .65rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .section-num {
@@ -135,6 +143,35 @@ body {
   color: var(--color-muted);
   margin-bottom: 1rem;
   line-height: 1.5;
+}
+
+/* ── BADGES ──────────────────────────────────────────── */
+.badge-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: .2rem .6rem;
+  border-radius: 20px;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.autofill-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #eafaf1;
+  color: var(--color-success);
+  border: 1px solid #a9dfbf;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: .2rem .6rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
 }
 
 /* ── FORM GRID ──────────────────────────────────────── */
@@ -164,7 +201,7 @@ textarea {
   font-family: inherit;
   color: var(--color-text);
   background: #fafbfd;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
   resize: vertical;
 }
 
@@ -182,31 +219,47 @@ textarea::placeholder {
   font-size: .88rem;
 }
 
+/* Auto-filled field highlight */
+.input--autofilled {
+  border-color: var(--color-success) !important;
+  background: #f0faf4 !important;
+  box-shadow: 0 0 0 3px rgba(39,174,96,.15) !important;
+  animation: autofill-pulse .6s ease;
+}
+
+@keyframes autofill-pulse {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.01); }
+  100% { transform: scale(1); }
+}
+
 /* ── FILE UPLOAD ────────────────────────────────────── */
 .file-label { cursor: pointer; display: block; }
 
 .file-drop-zone {
-  border: 2px dashed var(--color-border);
+  border: 2px dashed var(--color-primary-lt);
   border-radius: var(--radius);
-  padding: 2rem 1.5rem;
+  padding: 2.2rem 1.5rem;
   text-align: center;
-  transition: border-color var(--transition), background var(--transition);
-  background: #fafbfd;
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+  background: #f4f8ff;
   cursor: pointer;
 }
 
 .file-drop-zone:hover,
 .file-drop-zone--hover {
-  border-color: var(--color-primary-lt);
-  background: #f0f4fb;
+  border-color: var(--color-primary);
+  background: #e8f0fe;
+  box-shadow: 0 0 0 4px rgba(43,91,160,.1);
 }
 
 .file-drop-zone--selected {
   border-color: var(--color-success);
+  border-style: solid;
   background: #f0faf4;
 }
 
-.file-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+.file-icon { font-size: 2.8rem; margin-bottom: .6rem; }
 
 .file-text {
   font-size: .95rem;
@@ -226,6 +279,61 @@ textarea::placeholder {
   font-weight: 600;
 }
 
+/* ── EXTRACTION STATUS BANNER ───────────────────────── */
+.extraction-status {
+  margin-top: 1rem;
+  padding: .75rem 1.1rem;
+  border-radius: var(--radius);
+  font-size: .9rem;
+  font-weight: 500;
+  border-left: 4px solid transparent;
+}
+
+.extraction-status__inner {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+}
+
+.extraction-status--loading {
+  background: #eef4ff;
+  border-color: var(--color-primary-lt);
+  color: var(--color-primary);
+}
+
+.extraction-status--success {
+  background: #eafaf1;
+  border-color: var(--color-success);
+  color: #1a6b3a;
+}
+
+.extraction-status--warning {
+  background: #fef9ef;
+  border-color: var(--color-warning);
+  color: #7d4e00;
+}
+
+/* ── SPINNER ─────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2.5px solid rgba(43,91,160,.25);
+  border-top-color: var(--color-primary-lt);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+.spinner--btn {
+  border-color: rgba(255,255,255,.35);
+  border-top-color: #fff;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── SUBMIT ─────────────────────────────────────────── */
 .submit-area {
   text-align: center;
@@ -233,7 +341,10 @@ textarea::placeholder {
 }
 
 .btn-generate {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-lt) 100%);
   color: #fff;
   border: none;
@@ -245,7 +356,7 @@ textarea::placeholder {
   cursor: pointer;
   transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
   box-shadow: 0 4px 16px rgba(26,58,92,.35);
-  min-width: 220px;
+  min-width: 240px;
 }
 
 .btn-generate:hover:not(:disabled) {
@@ -264,6 +375,7 @@ textarea::placeholder {
   margin-top: .85rem;
   font-size: .83rem;
   color: var(--color-muted);
+  transition: color var(--transition);
 }
 
 /* ── FOOTER ─────────────────────────────────────────── */
@@ -277,8 +389,8 @@ textarea::placeholder {
 
 /* ── RESPONSIVE ─────────────────────────────────────── */
 @media (max-width: 600px) {
-  .site-title { font-size: 1.75rem; }
-  .form-grid  { grid-template-columns: 1fr; }
-  .form-section { padding: 1.2rem; }
-  .btn-generate { width: 100%; }
+  .site-title    { font-size: 1.75rem; }
+  .form-grid     { grid-template-columns: 1fr; }
+  .form-section  { padding: 1.2rem; }
+  .btn-generate  { width: 100%; }
 }

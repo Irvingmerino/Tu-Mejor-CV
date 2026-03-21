@@ -23,7 +23,7 @@ from flask import (
 )
 from dotenv import load_dotenv
 
-from claude_processor import process_cv_with_claude
+from claude_processor import process_cv_with_claude, extract_contact_from_file
 from cv_generator import generate_cv_docx
 
 load_dotenv()
@@ -49,9 +49,7 @@ def allowed_file(filename: str) -> bool:
 
 def get_file_type(filename: str) -> str:
     ext = filename.rsplit(".", 1)[1].lower()
-    if ext == "pdf":
-        return "pdf"
-    return "image"
+    return "pdf" if ext == "pdf" else "image"
 
 
 def get_anthropic_client() -> anthropic.Anthropic:
@@ -61,9 +59,44 @@ def get_anthropic_client() -> anthropic.Anthropic:
     return anthropic.Anthropic(api_key=api_key)
 
 
+def save_uploaded_file(file_obj) -> tuple[str, str]:
+    """Save an uploaded file and return (file_path, file_type)."""
+    file_extension = file_obj.filename.rsplit(".", 1)[1].lower()
+    unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
+    file_path = str(UPLOAD_FOLDER / unique_filename)
+    file_obj.save(file_path)
+    return file_path, get_file_type(file_obj.filename)
+
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
+
+
+@app.route("/extraer-contacto", methods=["POST"])
+def extraer_contacto():
+    """
+    Fast endpoint: receives an uploaded file, extracts only contact fields
+    using Haiku, and returns them as JSON for auto-filling the form.
+    """
+    uploaded_file = request.files.get("archivo")
+    if not uploaded_file or not uploaded_file.filename:
+        return jsonify({"success": False, "error": "No se recibió ningún archivo."}), 400
+
+    if not allowed_file(uploaded_file.filename):
+        return jsonify({"success": False, "error": "Formato de archivo no permitido."}), 400
+
+    file_path, file_type = save_uploaded_file(uploaded_file)
+    try:
+        client = get_anthropic_client()
+        contact_data = extract_contact_from_file(client, file_path, file_type)
+        return jsonify({"success": True, "contacto": contact_data})
+    except Exception as e:
+        logger.error("Contact extraction error: %s", e, exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        if Path(file_path).exists():
+            Path(file_path).unlink(missing_ok=True)
 
 
 @app.route("/generar", methods=["POST"])
@@ -71,6 +104,7 @@ def generar_cv():
     """
     Main endpoint: receives form data + optional file, calls Claude,
     generates DOCX, and returns it as a download.
+    Supports file-only mode (no manual text required when a file is uploaded).
     """
     # ── Collect text input ────────────────────────────────────
     nombre = request.form.get("nombre", "").strip()
@@ -84,7 +118,7 @@ def generar_cv():
     habilidades_texto = request.form.get("habilidades_texto", "").strip()
     info_adicional = request.form.get("info_adicional", "").strip()
 
-    # Build structured text for Claude
+    # Build structured text (only from fields the user actually filled in)
     text_parts = []
     if nombre:
         text_parts.append(f"Nombre completo: {nombre}")
@@ -118,20 +152,16 @@ def generar_cv():
         if not allowed_file(uploaded_file.filename):
             flash("Formato de archivo no permitido. Use PDF, PNG, JPG, JPEG, GIF o WEBP.", "error")
             return redirect(url_for("index"))
+        file_path, file_type = save_uploaded_file(uploaded_file)
 
-        file_extension = uploaded_file.filename.rsplit(".", 1)[1].lower()
-        unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
-        file_path = str(UPLOAD_FOLDER / unique_filename)
-        uploaded_file.save(file_path)
-        file_type = get_file_type(uploaded_file.filename)
-
+    # Require either a file OR some text (file-only mode is valid)
     if not text_input and not file_path:
-        flash("Por favor, ingresa al menos tu información de contacto o sube un archivo.", "error")
+        flash("Por favor, sube tu CV como archivo o completa al menos el campo de nombre.", "error")
         return redirect(url_for("index"))
 
     try:
         client = get_anthropic_client()
-        logger.info("Processing CV for: %s", nombre or "unknown")
+        logger.info("Processing CV — name: '%s', file: %s", nombre or "(from file)", bool(file_path))
 
         cv_data = process_cv_with_claude(
             client=client,
@@ -140,11 +170,12 @@ def generar_cv():
             file_type=file_type,
         )
 
-        docx_buffer = generate_cv_docx(cv_data)
-
-        # Create a safe filename
-        safe_name = (nombre or "CV").replace(" ", "_").replace("/", "-")
+        # Use name from extracted cv_data if the form field was empty
+        candidate_name = nombre or cv_data.get("contacto", {}).get("nombre", "CV")
+        safe_name = candidate_name.replace(" ", "_").replace("/", "-")
         download_name = f"CV_ATS_{safe_name}.docx"
+
+        docx_buffer = generate_cv_docx(cv_data)
 
         return send_file(
             docx_buffer,
@@ -166,33 +197,17 @@ def generar_cv():
         flash(f"Error inesperado: {str(e)}", "error")
         return redirect(url_for("index"))
     finally:
-        # Clean up uploaded file
         if file_path and Path(file_path).exists():
             Path(file_path).unlink(missing_ok=True)
 
 
-@app.route("/preview", methods=["POST"])
-def preview_cv():
-    """
-    Returns the structured CV data as JSON for preview purposes.
-    """
-    nombre = request.form.get("nombre", "").strip()
-    text_input = request.form.get("info_adicional", "").strip()
-
-    if nombre:
-        text_input = f"Nombre: {nombre}\n{text_input}"
-
-    try:
-        client = get_anthropic_client()
-        cv_data = process_cv_with_claude(client=client, text_input=text_input)
-        return jsonify({"success": True, "data": cv_data})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
 @app.errorhandler(413)
 def too_large(e):
-    flash(f"El archivo es demasiado grande. El tamaño máximo permitido es {os.getenv('MAX_UPLOAD_SIZE_MB', '10')} MB.", "error")
+    flash(
+        f"El archivo es demasiado grande. El tamaño máximo permitido es "
+        f"{os.getenv('MAX_UPLOAD_SIZE_MB', '10')} MB.",
+        "error",
+    )
     return redirect(url_for("index"))
 
 
