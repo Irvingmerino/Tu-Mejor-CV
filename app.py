@@ -190,11 +190,24 @@ def generar_cv():
         return redirect(url_for("index"))
     except json.JSONDecodeError as e:
         logger.error("JSON parsing error from Claude: %s", e)
-        flash("Error al procesar la respuesta de la IA. Intenta de nuevo.", "error")
+        flash("La IA devolvio una respuesta inesperada. Por favor intenta de nuevo.", "error")
+        return redirect(url_for("index"))
+    except RuntimeError as e:
+        logger.error("File processing error: %s", e)
+        flash(str(e), "error")
+        return redirect(url_for("index"))
+    except anthropic.APIConnectionError:
+        flash("No se pudo conectar con el servicio de IA. Verifica tu conexion a internet.", "error")
+        return redirect(url_for("index"))
+    except anthropic.AuthenticationError:
+        flash("API key invalida o no configurada. Revisa el archivo .env.", "error")
+        return redirect(url_for("index"))
+    except anthropic.RateLimitError:
+        flash("Limite de uso de la API alcanzado. Espera un momento e intenta de nuevo.", "error")
         return redirect(url_for("index"))
     except Exception as e:
         logger.error("Unexpected error: %s", e, exc_info=True)
-        flash(f"Error inesperado: {str(e)}", "error")
+        flash(f"Error inesperado al generar el CV: {str(e)}", "error")
         return redirect(url_for("index"))
     finally:
         if file_path and Path(file_path).exists():

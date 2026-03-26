@@ -3,10 +3,16 @@ Claude API integration for CV data extraction and enhancement.
 """
 
 import base64
+import io
 import json
 import re
+import logging
+
 import anthropic
 import pdfplumber
+import pypdfium2
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """Eres un experto redactor de CVs profesionales con especialización en formatos ATS (Applicant Tracking System) estilo Harvard. Tu tarea es extraer, organizar y optimizar la información del candidato para producir un CV de alta calidad y completamente compatible con sistemas ATS.
 
@@ -106,18 +112,56 @@ Reglas:
 - licencia: tipo y categoría de licencia de conducir si aparece"""
 
 
-def extract_text_from_pdf(file_path: str) -> str:
-    """Extract text content from a PDF file."""
-    text_parts = []
-    with pdfplumber.open(file_path) as pdf:
-        for page in pdf.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text_parts.append(page_text)
-    return "\n".join(text_parts)
+# ── PDF utilities ──────────────────────────────────────────────
+
+def _try_extract_pdf_text(file_path: str) -> str:
+    """
+    Attempt to extract text from a PDF with pdfplumber.
+    Returns empty string on failure or if the PDF is image-based.
+    """
+    try:
+        text_parts = []
+        with pdfplumber.open(file_path) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_parts.append(page_text)
+        return "\n".join(text_parts).strip()
+    except Exception as exc:
+        logger.debug("pdfplumber could not extract text: %s", exc)
+        return ""
 
 
-def encode_image_base64(file_path: str) -> tuple[str, str]:
+def _pdf_to_images_base64(file_path: str, max_pages: int = 4) -> list[tuple[str, str]]:
+    """
+    Render each PDF page to a PNG image using pypdfium2.
+    Returns a list of (base64_data, media_type) tuples.
+    """
+    results = []
+    try:
+        pdf = pypdfium2.PdfDocument(file_path)
+        num_pages = min(len(pdf), max_pages)
+        for i in range(num_pages):
+            page = pdf[i]
+            bitmap = page.render(scale=2.0)          # 2× scale for legibility
+            pil_img = bitmap.to_pil()
+            buf = io.BytesIO()
+            pil_img.save(buf, format="PNG")
+            buf.seek(0)
+            b64 = base64.standard_b64encode(buf.read()).decode("utf-8")
+            results.append((b64, "image/png"))
+    except Exception as exc:
+        logger.error("PDF-to-image rendering failed: %s", exc)
+        raise RuntimeError(
+            f"No se pudo procesar el archivo PDF. "
+            f"Asegurate de que el archivo no este corrupto o protegido con contraseña."
+        ) from exc
+    return results
+
+
+# ── Image utilities ────────────────────────────────────────────
+
+def _encode_image_base64(file_path: str) -> tuple[str, str]:
     """Encode an image file to base64 and detect its media type."""
     extension = file_path.rsplit(".", 1)[-1].lower()
     media_type_map = {
@@ -133,28 +177,60 @@ def encode_image_base64(file_path: str) -> tuple[str, str]:
     return image_data, media_type
 
 
-def _build_messages_for_file(prompt: str, file_path: str, file_type: str, extra_text: str = "") -> list:
-    """Build Claude messages list based on file type."""
-    if file_type == "pdf":
-        pdf_text = extract_text_from_pdf(file_path)
-        source_text = f"Contenido del documento:\n{pdf_text}"
-        if extra_text.strip():
-            source_text = f"Información adicional del candidato:\n{extra_text}\n\n{source_text}"
-        return [{"role": "user", "content": f"{prompt}\n\n{source_text}"}]
+# ── Message builders ───────────────────────────────────────────
 
-    # Image file
-    image_data, media_type = encode_image_base64(file_path)
-    content = []
-    text_block = prompt
-    if extra_text.strip():
-        text_block = f"{prompt}\n\nInformación adicional del candidato:\n{extra_text}"
-    content.append({"type": "text", "text": text_block})
-    content.append({
+def _image_block(b64_data: str, media_type: str) -> dict:
+    return {
         "type": "image",
-        "source": {"type": "base64", "media_type": media_type, "data": image_data},
-    })
-    return [{"role": "user", "content": content}]
+        "source": {"type": "base64", "media_type": media_type, "data": b64_data},
+    }
 
+
+def _build_messages_for_file(
+    prompt: str,
+    file_path: str,
+    file_type: str,
+    extra_text: str = "",
+) -> list[dict]:
+    """
+    Build the Claude messages list for a given file.
+
+    Strategy:
+    - Text-based PDF  → extract text, send as a text block
+    - Scanned/image PDF → render pages with pypdfium2, send as image blocks
+    - Image file       → send directly as an image block
+    """
+    text_header = prompt
+    if extra_text.strip():
+        text_header = f"{prompt}\n\nInformación adicional del candidato:\n{extra_text}"
+
+    if file_type == "pdf":
+        pdf_text = _try_extract_pdf_text(file_path)
+
+        if pdf_text:
+            # Text-based PDF: no vision needed
+            logger.debug("PDF text extraction successful (%d chars)", len(pdf_text))
+            full_text = f"{text_header}\n\nContenido del documento:\n{pdf_text}"
+            return [{"role": "user", "content": full_text}]
+        else:
+            # Image-based (scanned) PDF: render to images
+            logger.debug("PDF has no extractable text — rendering pages as images")
+            images = _pdf_to_images_base64(file_path)
+            content = [{"type": "text", "text": text_header}]
+            content += [_image_block(b64, mt) for b64, mt in images]
+            return [{"role": "user", "content": content}]
+
+    else:
+        # Plain image file
+        b64, media_type = _encode_image_base64(file_path)
+        content = [
+            {"type": "text", "text": text_header},
+            _image_block(b64, media_type),
+        ]
+        return [{"role": "user", "content": content}]
+
+
+# ── JSON helper ────────────────────────────────────────────────
 
 def _parse_json_response(raw_text: str) -> dict:
     """Strip markdown fences and parse JSON."""
@@ -164,6 +240,8 @@ def _parse_json_response(raw_text: str) -> dict:
     return json.loads(raw_text)
 
 
+# ── Public API ─────────────────────────────────────────────────
+
 def extract_contact_from_file(
     client: anthropic.Anthropic,
     file_path: str,
@@ -171,13 +249,16 @@ def extract_contact_from_file(
 ) -> dict:
     """
     Fast contact-only extraction from a file using Haiku model.
-    Returns a dict with contact fields: nombre, telefono, correo, direccion, dni, licencia.
+    Returns a dict with: nombre, telefono, correo, direccion, dni, licencia.
     """
     messages = _build_messages_for_file(CONTACT_EXTRACTION_PROMPT, file_path, file_type)
     response = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=512,
-        system="Eres un asistente que extrae datos de contacto de documentos. Responde SOLO con JSON válido, sin texto adicional.",
+        system=(
+            "Eres un asistente que extrae datos de contacto de documentos. "
+            "Responde SOLO con JSON válido, sin texto adicional."
+        ),
         messages=messages,
     )
     return _parse_json_response(response.content[0].text)
@@ -198,7 +279,7 @@ def process_cv_with_claude(
     else:
         messages = [{
             "role": "user",
-            "content": f"{EXTRACTION_PROMPT}\n\nInformación del candidato:\n{text_input}"
+            "content": f"{EXTRACTION_PROMPT}\n\nInformación del candidato:\n{text_input}",
         }]
 
     response = client.messages.create(
